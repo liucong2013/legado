@@ -1272,4 +1272,7 @@
     <string name="replace_body">Replace Body</string>
     <string name="ai_summary_model_list">Model List</string>
     <string name="ai_summary_replace_tooltip">Replace original text with AI summary</string>
+    <string name="ai_summary_mode_exited_on_jump">Exited AI summary mode due to chapter jump</string>
+    <string name="ai_summary_pre_cache_delay">Pre-cache Delay (seconds)</string>
+    <string name="ai_summary_pre_cache_delay_desc">The delay in seconds between pre-caching consecutive chapters. Default is 10.</string>
 </resources>

@@ -46,6 +46,14 @@
         app:defaultValue="3"
         android:inputType="number" />
 
+    <EditTextPreference
+        app:key="aiSummaryPreCacheDelay"
+        app:title="@string/ai_summary_pre_cache_delay"
+        app:persistent="true"
+        app:defaultValue="10"
+        android:inputType="number"
+        app:useSimpleSummaryProvider="true" />
+
     <io.legado.app.lib.prefs.PathPreference
         app:key="aiSummaryCachePath"
         app:title="@string/ai_summary_cache_path"

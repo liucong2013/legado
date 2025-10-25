@@ -173,6 +173,9 @@ class ReadBookActivity : BaseReadBookActivity(),
     private val tocActivity =
         registerForActivityResult(TocActivityResult()) {
             it?.let {
+                if (kotlin.math.abs(it.first - ReadBook.durChapterIndex) > 1) {
+                    postEvent(EventBus.CHAPTER_JUMP, "")
+                }
                 viewModel.openChapter(it.first, it.second)
             }
         }
@@ -1496,6 +1499,9 @@ class ReadBookActivity : BaseReadBookActivity(),
 
     /* 进度条跳转到指定章节 */
     override fun skipToChapter(index: Int) {
+        if (kotlin.math.abs(index - ReadBook.durChapterIndex) > 1) {
+            postEvent(EventBus.CHAPTER_JUMP, "")
+        }
         ReadBook.saveCurrentBookProgress() //退出章节跳转恢复此时进度
         viewModel.openChapter(index)
     }
@@ -1516,6 +1522,7 @@ class ReadBookActivity : BaseReadBookActivity(),
 
     override fun onEditContentClick() {
         if (isAiSummaryReplaceMode) {
+            aiSummaryHelper.cancelPreCacheJobs()
             originalContentForAiReplace?.let {
                 replaceContent(it)
                 ReadBook.loadContent(false)
@@ -1538,6 +1545,7 @@ class ReadBookActivity : BaseReadBookActivity(),
         ReadBook.loadContent(false)
         isAiSummaryReplaceMode = true
         aiSummaryHelper.upAiWordCount()
+        aiSummaryHelper.preCacheNextChapterSummary()
     }
 
     override fun onAiCoarseClick() {
@@ -1746,6 +1754,14 @@ class ReadBookActivity : BaseReadBookActivity(),
             aiSummaryHelper.dismissInProgressSnackbar()
             if (AppConfig.aiSummaryModeEnabled && ReadBook.durChapterIndex == chapterIndex) {
                 ReadBook.loadContent(false)
+            }
+        }
+        observeEvent<String>(EventBus.CHAPTER_JUMP) {
+            if (isAiSummaryReplaceMode) {
+                isAiSummaryReplaceMode = false
+                originalContentForAiReplace = null
+                aiSummaryHelper.cancelPreCacheJobs()
+                toastOnUi(R.string.ai_summary_mode_exited_on_jump)
             }
         }
     }

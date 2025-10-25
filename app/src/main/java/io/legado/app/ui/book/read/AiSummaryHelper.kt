@@ -1,5 +1,7 @@
 package io.legado.app.ui.book.read
 
+import kotlinx.coroutines.ensureActive
+
 import android.view.animation.AnimationUtils
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleCoroutineScope
@@ -31,8 +33,18 @@ import java.util.concurrent.Semaphore
 class AiSummaryHelper(
     private val activity: ReadBookActivity,
     private val lifecycleScope: LifecycleCoroutineScope,
-    private val binding: ActivityBookReadBinding
+    private val binding: ActivityBookReadBinding,
 ) {
+
+    private val preCacheJobs = java.util.concurrent.CopyOnWriteArrayList<kotlinx.coroutines.Job>()
+    private var preCacheDispatcherJob: kotlinx.coroutines.Job? = null
+
+    fun cancelPreCacheJobs() {
+        preCacheDispatcherJob?.cancel()
+        preCacheJobs.forEach { it.cancel() }
+        preCacheJobs.clear()
+        Log.d("AiSummary", "Pre-cache jobs cancelled.")
+    }
 
     private var preCacheSemaphore: Semaphore? = null
     private val preCacheMutex = Mutex()
@@ -112,6 +124,9 @@ class AiSummaryHelper(
                 return
             }
 
+            // 在发起本章摘要任务前，立即启动后续章节的预缓存任务
+            preCacheNextChapterSummary()
+
             lifecycleScope.launch {
                 inProgressSnackbar = Snackbar.make(
                     binding.root,
@@ -131,7 +146,6 @@ class AiSummaryHelper(
                             activity.toastOnUi("生成成功")
                             AiSummaryProvider.saveAiSummaryToCache(book, chapter, finalSummary)
                             ReadBook.loadContent(false)
-                            preCacheNextChapterSummary()
                         }
                     },
                     onError = {
@@ -144,6 +158,7 @@ class AiSummaryHelper(
                 )
             }
         } else {
+            cancelPreCacheJobs()
             ReadBook.loadContent(false)
         }
     }
@@ -254,22 +269,28 @@ class AiSummaryHelper(
         }
     }
 
-    private fun preCacheNextChapterSummary() {
+    internal fun preCacheNextChapterSummary() {
+        preCacheDispatcherJob?.cancel()
         val lookaheadCount = activity.getPrefString(PreferKey.aiSummaryChapterCount, "3")?.toIntOrNull() ?: 3
         if (lookaheadCount == 0) return
 
         val book = ReadBook.book ?: return
 
-        lifecycleScope.launch(Dispatchers.IO) {
+        val preCacheDelay = activity.getPrefString(PreferKey.aiSummaryPreCacheDelay, "10")?.toLongOrNull()?.times(1000) ?: 10000L
+
+        preCacheDispatcherJob = lifecycleScope.launch(Dispatchers.IO) {
             for (i in 1..lookaheadCount) {
+                ensureActive()
                 val targetIndex = ReadBook.durChapterIndex + i
                 if (targetIndex >= ReadBook.chapterSize) break
 
                 val chapter = appDb.bookChapterDao.getChapter(book.bookUrl, targetIndex) ?: continue
-                
-                launch {
-                    runPreCacheTask(book, chapter, i * 10000L)
+
+                val job = launch {
+                    runPreCacheTask(book, chapter, i * preCacheDelay)
                 }
+                job.invokeOnCompletion { preCacheJobs.remove(job) }
+                preCacheJobs.add(job)
             }
         }
     }

@@ -195,4 +195,5 @@ object PreferKey {
     const val aiSummaryCustomModel = "ai_summary_custom_model"
     const val aiSummaryModelsUrl = "aiSummaryModelsUrl"
     const val aiSummaryModelList = "aiSummaryModelList"
+    const val aiSummaryPreCacheDelay = "aiSummaryPreCacheDelay"
 }
