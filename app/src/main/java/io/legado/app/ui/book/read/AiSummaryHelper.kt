@@ -124,9 +124,6 @@ class AiSummaryHelper(
                 return
             }
 
-            // 在发起本章摘要任务前，立即启动后续章节的预缓存任务
-            preCacheNextChapterSummary()
-
             lifecycleScope.launch {
                 inProgressSnackbar = Snackbar.make(
                     binding.root,
@@ -146,6 +143,8 @@ class AiSummaryHelper(
                             activity.toastOnUi("生成成功")
                             AiSummaryProvider.saveAiSummaryToCache(book, chapter, finalSummary)
                             ReadBook.loadContent(false)
+                            // 当前章节成功完成后，再预缓存下一章节
+                            preCacheNextChapterSummary()
                         }
                     },
                     onError = {
@@ -154,6 +153,7 @@ class AiSummaryHelper(
                         activity.toastOnUi(it)
                         AppConfig.aiSummaryModeEnabled = false
                         binding.readMenu.setAiCoarseState(false)
+                        activity.showStreamingContentEditDialog()
                     }
                 )
             }

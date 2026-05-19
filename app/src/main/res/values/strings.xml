@@ -993,7 +993,30 @@
     <string name="ai_summary_save_mode">Save Mode</string>
     <string name="ai_summary_save_mode_desc">Mode to save AI summary</string>
     <string name="ai_summary_help">AI Summary Help</string>
-    <string name="ai_summary_help_desc">View help documentation for AI Summary feature</string>
+    <string name="ai_summary_help_desc">Click to view the usage guide</string>
+
+    <string name="ai_summary_api_format">API Format</string>
+        <string name="ai_summary_api_format_desc">Select the service provider format corresponding to your API Key</string>
+        <string-array name="ai_summary_api_format_entries">
+            <item>OpenAI Format (e.g., OpenAI, DeepSeek, Moonshot)</item>
+            <item>Gemini Format (e.g., Google AI Studio)</item>
+        </string-array>
+        <string-array name="ai_summary_api_format_values">
+            <item>openai</item>
+            <item>gemini</item>
+        </string-array>
+    
+        <string name="ai_profile_management">Profile Management</string>
+        <string name="ai_current_profile">Current Profile</string>
+        <string name="ai_profile_add">New Profile</string>
+        <string name="ai_profile_add_desc">Create a new AI configuration profile</string>
+        <string name="ai_profile_rename">Rename Current Profile</string>
+        <string name="ai_profile_delete">Delete Current Profile</string>
+        <string name="ai_profile_delete_desc">Cannot be recovered after deletion</string>
+        <string name="ai_current_profile_settings">Current Profile Settings</string>
+        <string name="ai_model_id">Model ID</string>
+    
+        <string name="a_plus_menu" translatable="false">A+</string>
     <string name="ai_summary_clear_cache">Clear AI Summary Cache</string>
     <string name="ai_summary_clear_cache_desc">Deletes all locally cached AI summary content</string>
     <string name="ai_summary_clear_cache_confirm">Are you sure you want to delete all AI summary caches? This action cannot be undone.</string>

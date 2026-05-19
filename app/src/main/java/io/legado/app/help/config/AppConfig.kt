@@ -690,76 +690,45 @@ object AppConfig : SharedPreferences.OnSharedPreferenceChangeListener {
             appCtx.putPrefBoolean(PreferKey.disableHorizontalAnimator, value)
         }
 
-    var enableMangaGray
+    var enableMangaGray: Boolean
         get() = appCtx.getPrefBoolean(PreferKey.enableMangaGray, false)
         set(value) {
             appCtx.putPrefBoolean(PreferKey.enableMangaGray, value)
         }
 
-    var aiSummaryApiKey: String?
-        get() = appCtx.getPrefString(PreferKey.aiSummaryApiKey)
+    var aiConfigProfiles: String?
+        get() = appCtx.getPrefString(PreferKey.aiConfigProfiles)
         set(value) {
-            appCtx.putPrefString(PreferKey.aiSummaryApiKey, value)
+            appCtx.putPrefString(PreferKey.aiConfigProfiles, value)
         }
 
-    var aiSummaryApiUrl: String?
-        get() = appCtx.getPrefString(PreferKey.aiSummaryApiUrl)
+    var aiActiveProfileName: String?
+        get() = appCtx.getPrefString(PreferKey.aiActiveProfileName)
         set(value) {
-            appCtx.putPrefString(PreferKey.aiSummaryApiUrl, value)
+            appCtx.putPrefString(PreferKey.aiActiveProfileName, value)
         }
 
-    var aiSummaryModelId: String?
-        get() = appCtx.getPrefString(PreferKey.aiSummaryModelId, "gpt-3.5-turbo")
-        set(value) {
-            appCtx.putPrefString(PreferKey.aiSummaryModelId, value)
+    fun getActiveProfile(): io.legado.app.model.entities.AiConfigProfile? {
+        val profilesJson = aiConfigProfiles
+        val activeProfileName = aiActiveProfileName
+        if (profilesJson.isNullOrEmpty() || activeProfileName.isNullOrEmpty()) {
+            return null
         }
-
-    var aiSummarySystemPrompt: String?
-        get() = appCtx.getPrefString(PreferKey.aiSummarySystemPrompt, "请总结以下内容：")
-        set(value) {
-            appCtx.putPrefString(PreferKey.aiSummarySystemPrompt, value)
+        return try {
+            val type = object : com.google.gson.reflect.TypeToken<List<io.legado.app.model.entities.AiConfigProfile>>() {}.type
+            val profiles = io.legado.app.utils.GSON.fromJson<List<io.legado.app.model.entities.AiConfigProfile>>(profilesJson, type)
+            profiles.firstOrNull { it.name == activeProfileName }
+        } catch (e: Exception) {
+            null
         }
+    }
 
-    var aiSummaryCachePath: String?
-        get() = appCtx.getPrefString(PreferKey.aiSummaryCachePath)
+    var aiSummaryChapterCount: Int
+        get() = appCtx.getPrefInt(PreferKey.aiSummaryChapterCount, 3)
         set(value) {
-            appCtx.putPrefString(PreferKey.aiSummaryCachePath, value)
-        }
-
-    var aiSummarySaveFormat: String?
-        get() = appCtx.getPrefString(PreferKey.aiSummarySaveFormat, "txt")
-        set(value) {
-            appCtx.putPrefString(PreferKey.aiSummarySaveFormat, value)
-        }
-
-    var aiSummarySaveMode: String?
-        get() = appCtx.getPrefString(PreferKey.aiSummarySaveMode, "overwrite")
-        set(value) {
-            appCtx.putPrefString(PreferKey.aiSummarySaveMode, value)
+            appCtx.putPrefInt(PreferKey.aiSummaryChapterCount, value)
         }
 
     var aiSummaryModeEnabled: Boolean = false
-
-    var aiSummaryModelsUrl: String?
-        get() = appCtx.getPrefString(PreferKey.aiSummaryModelsUrl)
-        set(value) {
-            appCtx.putPrefString(PreferKey.aiSummaryModelsUrl, value)
-        }
-
-    var aiSummaryModelList: Set<String>?
-        get() = appCtx.getPrefStringSet(PreferKey.aiSummaryModelList)
-        set(value) {
-            if (value == null) {
-                appCtx.removePref(PreferKey.aiSummaryModelList)
-            } else {
-                appCtx.putPrefStringSet(PreferKey.aiSummaryModelList, value.toMutableSet())
-            }
-        }
-
-    var aiSummaryCustomModel: String?
-        get() = appCtx.getPrefString(PreferKey.aiSummaryCustomModel)
-        set(value) {
-            appCtx.putPrefString(PreferKey.aiSummaryCustomModel, value)
-        }
 
 }

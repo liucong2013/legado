@@ -10,6 +10,8 @@ import io.legado.app.lib.theme.ThemeStore
 import io.legado.app.lib.theme.accentColor
 import io.legado.app.lib.theme.filletBackground
 import splitties.systemservices.windowManager
+import android.text.Editable
+import io.legado.app.R
 
 fun AlertDialog.applyTint(): AlertDialog {
     window?.setBackgroundDrawable(context.filletBackground)
@@ -81,3 +83,27 @@ fun DialogFragment.setLayout(width: Int, height: Int) {
 fun Dialog.setLayout(width: Int, height: Int) {
     window?.setLayout(width, height)
 }
+
+fun androidx.fragment.app.Fragment.showEditTextDialog(
+    titleRes: Int,
+    default: String? = null,
+    onConfirm: (text: Editable) -> Unit
+) {
+    val context = requireContext()
+    val padding = (16 * context.resources.displayMetrics.density).toInt()
+    val editText = androidx.appcompat.widget.AppCompatEditText(context)
+    editText.setText(default)
+    editText.setPadding(padding, padding, padding, padding)
+    val dialog = AlertDialog.Builder(context)
+        .setTitle(titleRes)
+        .setView(editText)
+        .setPositiveButton(R.string.ok) { _, _ ->
+            onConfirm(editText.text!!)
+        }
+        .setNegativeButton(R.string.cancel, null)
+        .create()
+    dialog.show()
+    dialog.applyTint()
+    dialog.requestInputMethod()
+}
+

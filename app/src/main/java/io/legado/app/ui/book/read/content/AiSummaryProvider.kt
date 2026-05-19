@@ -1,19 +1,15 @@
 package io.legado.app.ui.book.read.content
 
-import com.google.gson.stream.JsonReader
 import io.legado.app.data.entities.Book
 import io.legado.app.data.entities.BookChapter
 import io.legado.app.help.config.AppConfig
 import io.legado.app.model.AiSummaryState
 import android.util.Log
+import io.legado.app.ui.book.read.content.api.AiApiFactory
 import io.legado.app.utils.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
-import okhttp3.Request
-import okhttp3.RequestBody.Companion.toRequestBody
-import okhttp3.Response
 import splitties.init.appCtx
 import java.io.File
 import java.io.IOException
@@ -75,99 +71,53 @@ object AiSummaryProvider {
         onFinish: () -> Unit,
         onError: (String) -> Unit
     ) {
-        val apiKey = AppConfig.aiSummaryApiKey
-        val apiUrl = AppConfig.aiSummaryApiUrl
-        if (apiKey.isNullOrEmpty() || apiUrl.isNullOrEmpty()) {
-            onError.invoke("请先设置AI摘要的API Key和URL")
+        val activeProfile = AppConfig.getActiveProfile()
+        if (activeProfile == null) {
+            onError.invoke("请先在设置中创建并激活一个AI配置方案")
             onFinish.invoke()
             return
         }
 
-        
+        if (activeProfile.apiKey.isEmpty() || activeProfile.apiUrl.isEmpty()) {
+            onError.invoke("当前激活的AI方案缺少API Key或URL")
+            onFinish.invoke()
+            return
+        }
+
         val wordCount = content.length
         Log.d("AiSummary", "开始生成AI摘要，请求字数：${wordCount}")
-   
-        val newContent = "${content}\n\n本章${wordCount}字左右"
-        
-        val client = OkHttpClient.Builder()
-            .connectTimeout(60, TimeUnit.SECONDS)
-            .readTimeout(60, TimeUnit.SECONDS)
-            .writeTimeout(60, TimeUnit.SECONDS)
-            .build()
-        val mediaType = "application/json; charset=utf-8".toMediaType()
-        val messages = mutableListOf<Map<String, String>>()
-        messages.add(mapOf("role" to "system", "content" to (AppConfig.aiSummarySystemPrompt ?: "请总结以下内容：")))
-        messages.add(mapOf("role" to "user", "content" to newContent))
-        val requestBody = GSON.toJson(mapOf(
-            "model" to (AppConfig.aiSummaryModelId ?: "gpt-3.5-turbo"),
-            "messages" to messages,
-            "stream" to true
-        )).toRequestBody(mediaType)
 
-        val request = Request.Builder()
-            .url(apiUrl)
-            .post(requestBody)
-            .addHeader("Authorization", "Bearer $apiKey")
-            .addHeader("Accept", "text/event-stream")
+        val newContent = "${content}\n\n本章${wordCount}字左右"
+
+        val client = OkHttpClient.Builder()
+            .connectTimeout(120, TimeUnit.SECONDS)
+            .readTimeout(120, TimeUnit.SECONDS)
+            .writeTimeout(120, TimeUnit.SECONDS)
             .build()
 
         try {
+            // 使用工厂和策略模式
+            val api = AiApiFactory.create(activeProfile.apiFormat)
+            val request = api.createRequest(
+                activeProfile.apiKey,
+                activeProfile.apiUrl,
+                activeProfile.modelId,
+                activeProfile.systemPrompt,
+                newContent
+            )
+
             withContext(Dispatchers.IO) {
                 client.newCall(request).execute().use {
                     if (!it.isSuccessful) {
-                        throw IOException("Unexpected code $it")
+                        throw IOException("Unexpected code ${it.body?.string()}")
                     }
-                    handleStreamResponse(it, onResponse, onFinish, onError)
+                    api.handleStreamResponse(it, onResponse, onFinish, onError)
                 }
             }
         } catch (e: IOException) {
             Log.e("getAiSummary", e.stackTraceToString())
             withContext(Dispatchers.Main) {
                 onError.invoke("请求失败: ${e.message}")
-                onFinish.invoke()
-            }
-        }
-    }
-
-    private suspend fun handleStreamResponse(
-        response: Response,
-        onResponse: (String) -> Unit,
-        onFinish: () -> Unit,
-        onError: (String) -> Unit
-    ) {
-        val source = response.body?.source() ?: return
-        try {
-            while (!source.exhausted()) {
-                val line = source.readUtf8Line() ?: continue
-                if (line.startsWith("data:")) {
-                    val data = line.substring(5).trim()
-                    if (data == "[DONE]") {
-                        break
-                    }
-                    try {
-                        val reader = JsonReader(data.reader())
-                        val chunk = GSON.fromJson<Map<String, Any>>(reader, object : com.google.gson.reflect.TypeToken<Map<String, Any>>() {}.type)
-                        val choices = chunk["choices"] as? List<*>
-                        val delta = choices?.firstOrNull() as? Map<*, *>
-                        val content = delta?.get("delta") as? Map<*, *>
-                        val text = content?.get("content") as? String
-                        if (!text.isNullOrEmpty()) {
-                            withContext(Dispatchers.Main) {
-                                onResponse.invoke(text)
-                            }
-                        }
-                    } catch (e: Exception) {
-                        // Ignore parsing errors for now
-                    }
-                }
-            }
-        } catch (e: IOException) {
-            Log.e("handleStreamResponse", e.stackTraceToString())
-            withContext(Dispatchers.Main) {
-                onError.invoke("读取数据流失败: ${e.message}")
-            }
-        } finally {
-            withContext(Dispatchers.Main) {
                 onFinish.invoke()
             }
         }

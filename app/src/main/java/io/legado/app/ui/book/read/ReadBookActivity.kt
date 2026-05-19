@@ -1540,11 +1540,15 @@ class ReadBookActivity : BaseReadBookActivity(),
             isAiSummaryReplaceMode = false
             originalContentForAiReplace = null
         } else {
-            val dialog = StreamingContentEditDialog()
-            dialog.setContentReplaceListener(this)
-            showDialogFragment(dialog)
+            showStreamingContentEditDialog()
         }
         aiSummaryHelper.upAiWordCount()
+    }
+
+    fun showStreamingContentEditDialog() {
+        val dialog = StreamingContentEditDialog()
+        dialog.setContentReplaceListener(this)
+        showDialogFragment(dialog)
     }
 
     override fun onContentReplace(content: String) {

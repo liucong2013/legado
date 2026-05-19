@@ -984,7 +984,26 @@
     <string name="ai_summary_save_mode">保存模式</string>
     <string name="ai_summary_save_mode_desc">AI摘要结果的保存模式</string>
     <string name="ai_summary_help">AI摘要帮助</string>
-    <string name="ai_summary_help_desc">查看AI摘要功能帮助文档</string>
+    <string name="ai_summary_help_desc">点击查看使用说明</string>
+
+    <string name="ai_summary_api_format">API 格式</string>
+    <string name="ai_summary_api_format_desc">选择您 API Key 对应的服务商格式</string>
+    <string-array name="ai_summary_api_format_entries">
+        <item>OpenAI 格式 (例如：OpenAI, DeepSeek, Moonshot)</item>
+        <item>Gemini 格式 (例如：Google AI Studio)</item>
+    </string-array>
+
+    <string name="ai_profile_management">方案管理</string>
+    <string name="ai_current_profile">当前方案</string>
+    <string name="ai_profile_add">新建方案</string>
+    <string name="ai_profile_add_desc">创建一个新的AI配置方案</string>
+    <string name="ai_profile_rename">重命名当前方案</string>
+    <string name="ai_profile_delete">删除当前方案</string>
+    <string name="ai_profile_delete_desc">删除后不可恢复</string>
+    <string name="ai_current_profile_settings">当前方案设置</string>
+    <string name="ai_model_id">模型ID</string>
+
+    <string name="a_plus_menu" translatable="false">A+</string>
     <string name="ai_summary_clear_cache">清空AI摘要缓存</string>
     <string name="ai_summary_clear_cache_desc">删除所有本地缓存的AI摘要内容</string>
     <string name="ai_summary_clear_cache_confirm">确定要删除所有AI摘要缓存吗？此操作不可撤销。</string>
